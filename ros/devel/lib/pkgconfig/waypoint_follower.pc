@@ -1,0 +1,8 @@
+prefix=/home/student/CarND_MIH/ros/devel
+
+Name: waypoint_follower
+Description: Description of waypoint_follower
+Version: 0.0.0
+Cflags: -I/home/student/CarND_MIH/ros/src/waypoint_follower/include
+Libs: -L/home/student/CarND_MIH/ros/devel/lib -llibwaypoint_follower
+Requires: roscpp std_msgs tf geometry_msgs styx_msgs

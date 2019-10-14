@@ -7,6 +7,7 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/student/CarND-Capstone/ros/devel:$CMAKE_PREFIX_PATH"
-export PWD="/home/student/CarND-Capstone/ros/build"
-export ROS_PACKAGE_PATH="/home/student/CarND-Capstone/ros/src:$ROS_PACKAGE_PATH"
+export LD_LIBRARY_PATH="/opt/ros/kinetic/lib:/opt/ros/kinetic/lib/x86_64-linux-gnu"
+export PKG_CONFIG_PATH="/opt/ros/kinetic/lib/pkgconfig:/opt/ros/kinetic/lib/x86_64-linux-gnu/pkgconfig"
+export PWD="/home/student/CarND_MIH/ros/build"
+export PYTHONPATH="/opt/ros/kinetic/lib/python2.7/dist-packages"

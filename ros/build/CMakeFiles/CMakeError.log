@@ -1,24 +1,24 @@
 Determining if the pthread_create exist failed with the following output:
-Change Dir: /home/student/CarND-Capstone/ros/build/CMakeFiles/CMakeTmp
+Change Dir: /home/student/CarND_MIH/ros/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_bff66/fast"
-/usr/bin/make -f CMakeFiles/cmTC_bff66.dir/build.make CMakeFiles/cmTC_bff66.dir/build
-make[1]: Entering directory '/home/student/CarND-Capstone/ros/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_bff66.dir/CheckSymbolExists.c.o
-/usr/bin/cc     -o CMakeFiles/cmTC_bff66.dir/CheckSymbolExists.c.o   -c /home/student/CarND-Capstone/ros/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
-Linking C executable cmTC_bff66
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bff66.dir/link.txt --verbose=1
-/usr/bin/cc       CMakeFiles/cmTC_bff66.dir/CheckSymbolExists.c.o  -o cmTC_bff66 -rdynamic 
-CMakeFiles/cmTC_bff66.dir/CheckSymbolExists.c.o: In function `main':
+Run Build Command:"/usr/bin/make" "cmTC_3d44a/fast"
+/usr/bin/make -f CMakeFiles/cmTC_3d44a.dir/build.make CMakeFiles/cmTC_3d44a.dir/build
+make[1]: Entering directory '/home/student/CarND_MIH/ros/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3d44a.dir/CheckSymbolExists.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_3d44a.dir/CheckSymbolExists.c.o   -c /home/student/CarND_MIH/ros/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_3d44a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3d44a.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_3d44a.dir/CheckSymbolExists.c.o  -o cmTC_3d44a -rdynamic 
+CMakeFiles/cmTC_3d44a.dir/CheckSymbolExists.c.o: In function `main':
 CheckSymbolExists.c:(.text+0x16): undefined reference to `pthread_create'
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_bff66.dir/build.make:97: recipe for target 'cmTC_bff66' failed
-make[1]: *** [cmTC_bff66] Error 1
-make[1]: Leaving directory '/home/student/CarND-Capstone/ros/build/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_bff66/fast' failed
-make: *** [cmTC_bff66/fast] Error 2
+CMakeFiles/cmTC_3d44a.dir/build.make:97: recipe for target 'cmTC_3d44a' failed
+make[1]: *** [cmTC_3d44a] Error 1
+make[1]: Leaving directory '/home/student/CarND_MIH/ros/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_3d44a/fast' failed
+make: *** [cmTC_3d44a/fast] Error 2
 
-File /home/student/CarND-Capstone/ros/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+File /home/student/CarND_MIH/ros/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
 /* */
 #include <pthread.h>
 
@@ -34,22 +34,22 @@ int main(int argc, char** argv)
 }
 
 Determining if the function pthread_create exists in the pthreads failed with the following output:
-Change Dir: /home/student/CarND-Capstone/ros/build/CMakeFiles/CMakeTmp
+Change Dir: /home/student/CarND_MIH/ros/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_b3e30/fast"
-/usr/bin/make -f CMakeFiles/cmTC_b3e30.dir/build.make CMakeFiles/cmTC_b3e30.dir/build
-make[1]: Entering directory '/home/student/CarND-Capstone/ros/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_b3e30.dir/CheckFunctionExists.c.o
-/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_b3e30.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
-Linking C executable cmTC_b3e30
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b3e30.dir/link.txt --verbose=1
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_b3e30.dir/CheckFunctionExists.c.o  -o cmTC_b3e30 -rdynamic -lpthreads 
+Run Build Command:"/usr/bin/make" "cmTC_4b3f0/fast"
+/usr/bin/make -f CMakeFiles/cmTC_4b3f0.dir/build.make CMakeFiles/cmTC_4b3f0.dir/build
+make[1]: Entering directory '/home/student/CarND_MIH/ros/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4b3f0.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_4b3f0.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_4b3f0
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4b3f0.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_4b3f0.dir/CheckFunctionExists.c.o  -o cmTC_4b3f0 -rdynamic -lpthreads 
 /usr/bin/ld: cannot find -lpthreads
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_b3e30.dir/build.make:97: recipe for target 'cmTC_b3e30' failed
-make[1]: *** [cmTC_b3e30] Error 1
-make[1]: Leaving directory '/home/student/CarND-Capstone/ros/build/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_b3e30/fast' failed
-make: *** [cmTC_b3e30/fast] Error 2
+CMakeFiles/cmTC_4b3f0.dir/build.make:97: recipe for target 'cmTC_4b3f0' failed
+make[1]: *** [cmTC_4b3f0] Error 1
+make[1]: Leaving directory '/home/student/CarND_MIH/ros/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_4b3f0/fast' failed
+make: *** [cmTC_4b3f0/fast] Error 2
 
 
