@@ -2,8 +2,9 @@
 
 import numpy as np
 import rospy
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TwistStamped
 from styx_msgs.msg import Lane, Waypoint
+from std_msgs.msg import Int32
 from scipy.spatial import KDTree
 
 
@@ -24,7 +25,7 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 100 # Number of waypoints we will publish. You can change this number
 
 
 class WaypointUpdater(object):
@@ -33,6 +34,8 @@ class WaypointUpdater(object):
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
+        rospy.Subscriber('current_velocity', TwistStamped, self.velocity_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
 		
@@ -44,6 +47,8 @@ class WaypointUpdater(object):
         self.base_waypoints = None
         self.waypoints_2d = None
         self.waypoint_tree = None
+        self.current_vel_lin_x = None
+        self.stop_line_wp_idx = -1
         #print("----------Waypoint Tree None initialized-----------")
         self.loop()
         
@@ -51,7 +56,7 @@ class WaypointUpdater(object):
         #print("self.loop started")
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
-            if self.pose and self.base_waypoints:
+            if self.pose and self.base_waypoints and self.waypoint_tree:
                 # Get closest waypoint
                 #print("while started")
                 closest_waypoint_idx = self.get_closest_waypoint_idx()
@@ -94,34 +99,97 @@ class WaypointUpdater(object):
             #print "closest_idx returned: {}".format(closest_idx)
         return closest_idx
         
-        #print("get_closest_waypoint_idx finished") 
-              
-        
+        #print("get_closest_waypoint_idx finished")            
         
     def publish_waypoints(self, closest_idx):
-        print("publish_waypoints started") 
+        rospy.loginfo("publish_waypoints started")
         lane = Lane()
         lane.header = self.base_waypoints.header
         if closest_idx is not None:
-            rospy.loginfo("closest_idx: %.2f", closest_idx)
             lane.waypoints = self.base_waypoints.waypoints[closest_idx : closest_idx + LOOKAHEAD_WPS]
+            
+            if self.stop_line_wp_idx > 1:
+                stop_line_wp_idx = self.stop_line_wp_idx -2
+                rospy.loginfo("closest_idx: %.2f   stop_line_wp_idx: %.2f", closest_idx, stop_line_wp_idx)
+            else:
+                rospy.loginfo("closest_idx: %.2f", closest_idx)
+                stop_line_wp_idx = 9999999 # infinite
+
+            if (self.stop_line_wp_idx >= 0) and (stop_line_wp_idx < (closest_idx +LOOKAHEAD_WPS)): 
+                # Idx > 0 if upcoming traffic light = Red // otherwise it is not published or -1
+                # If stop line idx within the planning horizon, then an action is needed
+                
+                #distance_along_trace = self.calculate_distance_along_trace(closest_idx, stop_line_wp_idx) # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
+                distance_along_trace = self.distance(self.base_waypoints.waypoints, closest_idx, stop_line_wp_idx) # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
+                rospy.loginfo("Red traffic light ahead")
+                              
+                if self.current_vel_lin_x and distance_along_trace > 0.5: 
+                    avg_dec =  self.current_vel_lin_x / distance_along_trace
+                    rospy.loginfo("distance_along_trace: %.2f, self.current_vel_lin_x: %.2f, avg_dec: %.2f", distance_along_trace, self.current_vel_lin_x, avg_dec)
+                else:
+                    avg_dec = 0
+                    rospy.loginfo("distance_along_trace: %.2f, self.current_vel_lin_x: None, avg_dec: 0", distance_along_trace)
+                
+                if self.current_vel_lin_x > 0.1:
+                    v_seg_start = self.current_vel_lin_x
+                else:
+                    v_seg_start = 0.
+                    
+                rospy.loginfo("self.current_vel_lin_x: %.2f", self.current_vel_lin_x)
+
+                current_wp_idx = 0 #closest_idx
+               
+                for i in range(LOOKAHEAD_WPS-1):
+                    #dist_seg = self.calculate_distance_along_trace(current_wp_idx, current_wp_idx + 1)
+                    dist_seg = self.distance(self.base_waypoints.waypoints, current_wp_idx, current_wp_idx + 1) # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
+                    #rospy.loginfo("LOOKAHEAD_WPS: %.2f, current_wp_idx: %.2f, len(lane.waypoints): %.2f", LOOKAHEAD_WPS, current_wp_idx, len(lane.waypoints))
+                    rospy.loginfo("i: %.2f, v_seg_start: %.4f, avg_dec: %.4f, dist_seg: %.4f", i, v_seg_start, avg_dec, dist_seg)
+                    lane.waypoints[current_wp_idx].twist.twist.linear.x = v_seg_start
+                    
+                    if avg_dec > 0.01: # and v_seg_start > 0.01:
+                        if (2 * dist_seg / avg_dec) > (v_seg_start/avg_dec)**2:
+                            time_seg = (v_seg_start / avg_dec) + math.sqrt((v_seg_start/avg_dec)**2 - (2 * dist_seg / avg_dec))
+                        else:
+                            time_seg = 0
+                            
+                        #rospy.loginfo("v_seg_start: %.2f, dist_seg: %.2f, time_seg: %.2f", v_seg_start, dist_seg, time_seg)
+                        v_seg_start = max(0, v_seg_start - time_seg * avg_dec)
+                        
+                        lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = v_seg_start
+                        lane.waypoints[current_wp_idx + 1].twist.twist.linear.y = 0
+                        #rospy.loginfo("current_wp_idx: %.2f, wp.twist.twist.linear.x: %.2f", current_wp_idx, lane.waypoints[current_wp_idx + 1].twist.twist.linear.x)
+                    else:
+                        lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = 0
+                        lane.waypoints[current_wp_idx + 1].twist.twist.linear.y = 0
+                    current_wp_idx +=1
+                    
+            else: # traffic light state is not red or not within planning horizon, proceed with max velocity
+                rospy.loginfo("Planning horizon free of red traffic lights")
+                for wp in lane.waypoints:
+                    
+                    wp.twist.twist.linear.x = 50
+                    wp.twist.twist.linear.y = 0
+            
+            v_lin_x_array = []
             for wp in lane.waypoints:
-                wp.twist.twist.linear.x = 50
-                wp.twist.twist.linear.y = 0
-            #print("lane.waypoints [1]: ") 
-            #print(lane.waypoints[1]) 
+                    v_lin_x_array.append(wp.twist.twist.linear.x)
+            rospy.loginfo("v_lin_x_array {}".format(v_lin_x_array))
+            
+            
             self.final_waypoints_pub.publish(lane)
+                
         else: 
             rospy.loginfo("closest_idx: None", )
 
-        for wp in lane.waypoints:
-            print(wp.twist.twist.linear.x)
-        print("publish_waypoints finished") 
+        #for wp in lane.waypoints:
+            #print(wp.twist.twist.linear.x)
+        rospy.loginfo("publish_waypoints finished")
         
     def pose_cb(self, msg):
-        # TODO: Implement
         self.pose = msg
-        pass
+        
+    def velocity_cb(self, msg):
+        self.current_vel_lin_x = msg.twist.linear.x
 
     def waypoints_cb(self, waypoints):
         # TODO: Implement
@@ -139,7 +207,7 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        pass
+        self.stop_line_wp_idx = msg.data
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
@@ -152,12 +220,37 @@ class WaypointUpdater(object):
         waypoints[waypoint].twist.twist.linear.x = velocity
 
     def distance(self, waypoints, wp1, wp2):
+        #rospy.loginfo("distance started")
         dist = 0
         dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+        #rospy.loginfo("wp1: %.2f, wp2: %.2f", wp1, wp2)
         for i in range(wp1, wp2+1):
+            #rospy.loginfo("wp1: %.2f, i: %.2f", wp1, i)
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
+        #rospy.loginfo("dist_along_trace: %.2f", dist)
+        #rospy.loginfo("distance finished")
         return dist
+    
+    def calculate_distance_along_trace(self, car_idx, stop_idx):
+        #rospy.loginfo("calculate_distance_along_trace started")
+        waypoints_to_stop = Lane()
+        waypoints_to_stop.header = self.base_waypoints.header
+        waypoints_to_stop.waypoints = self.base_waypoints.waypoints[car_idx : stop_idx]
+        #rospy.loginfo("start_idx: %.2f, stop_idx: %.2f", car_idx, stop_idx)
+        self.waypoints = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints_to_stop.waypoints]
+        dist_along_trace = 0.
+        for i in range(len(self.base_waypoints.waypoints)-1):
+            x1 = waypoints_to_stop.waypoints[i].pose.pose.position.x 
+            y1 = waypoints_to_stop.waypoints[i].pose.pose.position.y
+            x2 = waypoints_to_stop.waypoints[i+1].pose.pose.position.x 
+            y2 = waypoints_to_stop.waypoints[i+1].pose.pose.position.y  
+            dist_segment = math.sqrt((x2-x1)**2 + (y2-y1)**2)
+            dist_along_trace += dist_segment
+            #rospy.loginfo("Loop i: %.2f, x1: %.2f, x2: %.2f, y1: %.2f, y2: %.2f, dist_segment: %.2f, dist_along_trace: %.2f", x1, x2, y1, y2, dist_segment, dist_along_trace)
+        #rospy.loginfo("calculate_distance_along_trace finished")
+        return dist_along_trace   
+            
 
 
 if __name__ == '__main__':
