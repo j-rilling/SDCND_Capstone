@@ -77,6 +77,27 @@ class TLDetector(object):
         #rospy.loginfo("traffic_cb started")
         self.lights = msg.lights
         #rospy.loginfo("traffic_cb finished")
+        
+        light_wp, state = self.process_traffic_lights()
+
+        '''
+        Publish upcoming red lights at camera frequency.
+        Each predicted state has to occur `STATE_COUNT_THRESHOLD` number
+        of times till we start using it. Otherwise the previous stable state is
+        used.
+        '''
+        if self.state != state:
+            self.state_count = 0
+            self.state = state
+        elif self.state_count >= STATE_COUNT_THRESHOLD:
+            self.last_state = self.state
+            light_wp = light_wp if state == TrafficLight.RED else -1
+            self.last_wp = light_wp
+            self.upcoming_red_light_pub.publish(Int32(light_wp))
+        else:
+            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+        self.state_count += 1
+        #rospy.loginfo("image_cb finished")
 
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index
