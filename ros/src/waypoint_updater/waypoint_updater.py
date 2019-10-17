@@ -38,7 +38,7 @@ class WaypointUpdater(object):
         rospy.Subscriber('current_velocity', TwistStamped, self.velocity_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-	rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
+        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
 		
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
@@ -47,12 +47,9 @@ class WaypointUpdater(object):
         self.base_waypoints = None
         self.waypoints_2d = None
         self.waypoint_tree = None
-<<<<<<< HEAD
         self.current_vel_lin_x = None
         self.stop_line_wp_idx = -1
-=======
-	self.stop_line_wp_idx = -1
->>>>>>> cfe712d575065d0de3ead20afe828762db538a98
+        self.stop_line_wp_idx = -1
         #print("----------Waypoint Tree None initialized-----------")
         self.loop()
         
@@ -135,31 +132,28 @@ class WaypointUpdater(object):
                     rospy.loginfo("distance_along_trace: %.2f, self.current_vel_lin_x: None, avg_dec: 0", distance_along_trace)
                 
                 if self.current_vel_lin_x > 0.1:
-                    v_seg_start = self.current_vel_lin_x
+                    v_current_wp = self.current_vel_lin_x
                 else:
-                    v_seg_start = 0.
+                    v_current_wp = 0.
                     
                 rospy.loginfo("self.current_vel_lin_x: %.2f", self.current_vel_lin_x)
-
+                
+                dist_seg_sum = 0
                 current_wp_idx = 0 #closest_idx
                
+                # Calculating a linear velocity reduction
                 for i in range(LOOKAHEAD_WPS-1):
                     #dist_seg = self.calculate_distance_along_trace(current_wp_idx, current_wp_idx + 1)
-                    dist_seg = self.distance(self.base_waypoints.waypoints, current_wp_idx, current_wp_idx + 1) # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
+                    dist_seg_sum += self.distance(self.base_waypoints.waypoints, current_wp_idx, current_wp_idx + 1) # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
                     #rospy.loginfo("LOOKAHEAD_WPS: %.2f, current_wp_idx: %.2f, len(lane.waypoints): %.2f", LOOKAHEAD_WPS, current_wp_idx, len(lane.waypoints))
-                    rospy.loginfo("i: %.2f, v_seg_start: %.4f, avg_dec: %.4f, dist_seg: %.4f", i, v_seg_start, avg_dec, dist_seg)
-                    lane.waypoints[current_wp_idx].twist.twist.linear.x = v_seg_start
+                    #rospy.loginfo("i: %.2f, v_current_wp: %.4f, avg_dec: %.4f, dist_seg_sum: %.4f", i, v_current_wp, avg_dec, dist_seg_sum)
+                    lane.waypoints[current_wp_idx].twist.twist.linear.x = v_current_wp
                     
-                    if avg_dec > 0.01: # and v_seg_start > 0.01:
-                        if (2 * dist_seg / avg_dec) > (v_seg_start/avg_dec)**2:
-                            time_seg = (v_seg_start / avg_dec) + math.sqrt((v_seg_start/avg_dec)**2 - (2 * dist_seg / avg_dec))
-                        else:
-                            time_seg = 0
-                            
-                        #rospy.loginfo("v_seg_start: %.2f, dist_seg: %.2f, time_seg: %.2f", v_seg_start, dist_seg, time_seg)
-                        v_seg_start = max(0, v_seg_start - time_seg * avg_dec)
-                        
-                        lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = v_seg_start
+                    if avg_dec > 0.1: # and v_current_wp > 0.01:
+                        v_current_wp = max(0, v_current_wp*(1-dist_seg_sum/distance_along_trace))
+                        rospy.loginfo("i: %.2f, v_current_wp: %.4f, avg_dec: %.4f, dist_seg_sum: %.4f", i, v_current_wp, avg_dec, dist_seg_sum)
+
+                        lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = v_current_wp
                         lane.waypoints[current_wp_idx + 1].twist.twist.linear.y = 0
                         #rospy.loginfo("current_wp_idx: %.2f, wp.twist.twist.linear.x: %.2f", current_wp_idx, lane.waypoints[current_wp_idx + 1].twist.twist.linear.x)
                     else:
@@ -171,9 +165,10 @@ class WaypointUpdater(object):
                 rospy.loginfo("Planning horizon free of red traffic lights")
                 for wp in lane.waypoints:
                     
-                    wp.twist.twist.linear.x = 50
+                    wp.twist.twist.linear.x = 50*0.44704 # mph converted to m/s
                     wp.twist.twist.linear.y = 0
-            
+           
+            # Log velocity vector
             v_lin_x_array = []
             for wp in lane.waypoints:
                     v_lin_x_array.append(wp.twist.twist.linear.x)
@@ -211,12 +206,9 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-<<<<<<< HEAD
         self.stop_line_wp_idx = msg.data
-=======
-	self.stop_line_wp_idx = msg.data
+        self.stop_line_wp_idx = msg.data
         #pass
->>>>>>> cfe712d575065d0de3ead20afe828762db538a98
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
