@@ -8,6 +8,7 @@ import csv
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
 brake_torque_to_keep_zero_speed = 450
+speed_limit = 40*ONE_MPH # mph converted to m/s
 
 
 class Controller(object):
@@ -89,7 +90,7 @@ class Controller(object):
         if current_vel_lin_x is None:
             rospy.loginfo("Error: current_vel_lin_x is None")
 
-            
+        target_vel_lin_x = min(speed_limit-0.5, target_vel_lin_x)    
         lin_x_vel_error = target_vel_lin_x - current_vel_lin_x
         rospy.loginfo("Linear speed error: %.2f, Linear speed target: %.2f, Linear speed current: %.2f", lin_x_vel_error, target_vel_lin_x, current_vel_lin_x)
 
@@ -97,13 +98,18 @@ class Controller(object):
         throttle = self.throttle_controller.step(lin_x_vel_error, delta_t)
         self.last_vel = current_vel_lin_x
         
+        # If car becomes to fast (tolerance 0.2 m/s) or car is really slow
+        # then throttle has to be set to 0
+        if current_vel_lin_x > (target_vel_lin_x+0.2) or target_vel_lin_x < 0.1:
+            throttle = 0.0
+        
         # Calculate Brake Value and potentially overwrite throttle value to 0
         if current_vel_lin_x < 0.1 and target_vel_lin_x == 0.0:
             rospy.loginfo("Vehicle in standstill and target velocity = 0 --> Brake against Creep needed")
             # Vehicle is in standstill (<0.1 m/s) and shall reside there, apply brake and release throttle
             throttle = 0.0
             brake_torque = brake_torque_to_keep_zero_speed # this torque is needed to brake against the creep and potential slopes due to automatic transmission
-        elif lin_x_vel_error < 0  and throttle < 0.1:
+        elif lin_x_vel_error < 0 and throttle < 0.1:
             # Set speed is smaller than current speed and throttle is just a little bit engaged
             rospy.loginfo("Braking needed!")
             throttle = 0.0
