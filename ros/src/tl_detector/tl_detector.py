@@ -55,8 +55,34 @@ class TLDetector(object):
         self.state_count = 0
 
         rospy.loginfo("Init finished")
-        rospy.spin()
 
+        self.loop()
+
+    def loop(self):
+        rate = rospy.Rate(15)
+        while not rospy.is_shutdown(): 
+
+            light_wp, new_state = self.process_traffic_lights()
+
+            '''
+            Publish upcoming red lights at camera frequency.
+            Each predicted state has to occur `STATE_COUNT_THRESHOLD` number
+            of times till we start using it. Otherwise the previous stable state is
+            used.
+            '''
+            if self.state != new_state: # or self.last_wp is -1:
+                self.state_count = 0
+                self.state = new_state
+            elif self.state_count >= STATE_COUNT_THRESHOLD:
+                self.last_state = self.state
+                if new_state != TrafficLight.RED:
+                    light_wp = -1
+                self.last_wp = light_wp
+                self.upcoming_red_light_pub.publish(Int32(light_wp))
+            else:
+                self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+            self.state_count += 1
+            rate.sleep()
 
     def pose_cb(self, msg):
         #rospy.loginfo("pose_cb started")
@@ -77,27 +103,6 @@ class TLDetector(object):
         #rospy.loginfo("traffic_cb started")
         self.lights = msg.lights
         #rospy.loginfo("traffic_cb finished")
-        
-        light_wp, state = self.process_traffic_lights()
-
-        '''
-        Publish upcoming red lights at camera frequency.
-        Each predicted state has to occur `STATE_COUNT_THRESHOLD` number
-        of times till we start using it. Otherwise the previous stable state is
-        used.
-        '''
-        if self.state != state: # or self.last_wp is -1:
-            self.state_count = 0
-            self.state = state
-        elif self.state_count >= STATE_COUNT_THRESHOLD:
-            self.last_state = self.state
-            light_wp = light_wp if state == TrafficLight.RED else -1
-            self.last_wp = light_wp
-            self.upcoming_red_light_pub.publish(Int32(light_wp))
-        else:
-            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
-        self.state_count += 1
-        #rospy.loginfo("image_cb finished")
 
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index
@@ -110,26 +115,7 @@ class TLDetector(object):
         #rospy.loginfo("image_cb started")
         
         #self.has_image = True
-        #self.camera_image = msg
-        light_wp, state = self.process_traffic_lights()
-
-        '''
-        Publish upcoming red lights at camera frequency.
-        Each predicted state has to occur `STATE_COUNT_THRESHOLD` number
-        of times till we start using it. Otherwise the previous stable state is
-        used.
-        '''
-        if self.state != state:
-            self.state_count = 0
-            self.state = state
-        elif self.state_count >= STATE_COUNT_THRESHOLD:
-            self.last_state = self.state
-            light_wp = light_wp if state == TrafficLight.RED else -1
-            self.last_wp = light_wp
-            self.upcoming_red_light_pub.publish(Int32(light_wp))
-        else:
-            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
-        self.state_count += 1
+        self.camera_image = msg
         #rospy.loginfo("image_cb finished")
 
     def get_closest_waypoint(self, x, y):
@@ -188,6 +174,7 @@ class TLDetector(object):
         #rospy.loginfo("process_traffic_lights started")
         closest_light = None
         stop_line_wp_idx = -1
+        car_wp_idx = 0
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
@@ -207,7 +194,8 @@ class TLDetector(object):
                     diff = d
                     closest_light = light
                     stop_line_wp_idx = temp_stop_line_wp_idx
-                #rospy.loginfo("stop line i: %.2f, temp_stop_line_wp_idx: %.2f, car_wp_idx: %.2f, d: %.2f, diff: %.2f, stop_line_wp_idx: %.2f", i, temp_stop_line_wp_idx, car_wp_idx, d, diff, stop_line_wp_idx)
+                #rospy.loginfo("stop line i: %.2f, temp_stop_line_wp_idx: %.2f, car_wp_idx: %.2f, d: %.2f, diff: %.2f, stop_line_wp_idx: %.2f", i, temp_stop_line_wp_idx,  
+                # car_wp_idx, d, diff, stop_line_wp_idx)
 
                     
 

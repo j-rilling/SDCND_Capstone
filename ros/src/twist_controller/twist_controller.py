@@ -32,14 +32,14 @@ class Controller(object):
 
         # Create Lowpass filter attribute for angular speed values
         ts_ang = 0.02 # 50 Hz sample time
-        tau_ang = 50 # cut-off frequency
+        tau_ang = 5 # cut-off frequency
         
         self.lin_v_lowpassfilter = LowPassFilter(tau_lin, ts_lin)
         self.ang_v_lowpassfilter = LowPassFilter(tau_ang, ts_ang)
         
         # Throttle Controller Initialization:
         throttle_kp = 0.3
-        throttle_ki = 0.1
+        throttle_ki = 0.2
         throttle_kd = 0.
         throttle_min = 0.0
         throttle_max = 0.4
@@ -53,6 +53,8 @@ class Controller(object):
         steering_kd = 0.0632
         steering_max = 1.0*max_steer_angle
         steering_min = -1.0*max_steer_angle
+        
+        self.last_steering = 0
 
         self.steering_controller = PID(steering_kp, steering_ki, steering_kd, steering_min, steering_max)
         
@@ -136,6 +138,15 @@ class Controller(object):
             rospy.loginfo("PID controller used for steering")
         """
         steering = (1.0 + 100.0*abs(steering_pid_controller))*steering_yaw_controller
+        
+        # This avoids strong oscillations on the steering angle
+        steering_max_delta = 0.5
+        if steering > (self.last_steering + steering_max_delta):
+            steering = self.last_steering + steering_max_delta
+        elif steering < (self.last_steering - steering_max_delta):
+            steering = self.last_steering - steering_max_delta
+        self.last_steering = steering
+        
         # steering = steering_yaw_controller  As it was before
         rospy.loginfo("Steering yaw controller: %.2f, steering pid controller: %.2f, total steering: %.2f", steering_yaw_controller, steering_pid_controller, steering)
 

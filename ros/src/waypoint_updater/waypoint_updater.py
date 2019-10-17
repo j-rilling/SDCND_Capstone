@@ -57,7 +57,7 @@ class WaypointUpdater(object):
         
     def loop(self):
         #print("self.loop started")
-        rate = rospy.Rate(50)
+        rate = rospy.Rate(20)
         while not rospy.is_shutdown():
             if self.pose and self.base_waypoints and self.waypoint_tree:
                 # Get closest waypoint
@@ -152,10 +152,9 @@ class WaypointUpdater(object):
                 #rospy.loginfo("self.current_vel_lin_x: %.2f", self.current_vel_lin_x)
                 
                 dist_seg_sum = 0
-                current_wp_idx = 0 #closest_idx
                
                 # Calculating a linear velocity reduction
-                for i in range(LOOKAHEAD_WPS-1):
+                for current_wp_idx in range(0, LOOKAHEAD_WPS-1):
                     # Calculate distance between current waypoint and the waypoint
                     # of the current index
                     dist_seg_sum += self.distance(self.base_waypoints.waypoints, current_wp_idx, current_wp_idx + 1) # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
@@ -178,7 +177,6 @@ class WaypointUpdater(object):
                     else:
                         lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = 0
                         lane.waypoints[current_wp_idx + 1].twist.twist.linear.y = 0
-                    current_wp_idx +=1
                     
             else: # traffic light state is not red or not within planning horizon, proceed with max velocity
                 rospy.loginfo("Planning horizon free of red traffic lights")
