@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+from math import sqrt
 from std_msgs.msg import Int32
 from geometry_msgs.msg import PoseStamped, Pose
 from styx_msgs.msg import TrafficLightArray, TrafficLight
@@ -13,6 +14,9 @@ import yaml
 from scipy.spatial import KDTree
 
 STATE_COUNT_THRESHOLD = 3
+TRAFFIC_LIGHT_SEARCH_RANGE = 300 # Parameter used to search traffic lights only within a short distance 
+                                 # to the car in order to make the code faster
+
 
 class TLDetector(object):
     def __init__(self):
@@ -46,7 +50,7 @@ class TLDetector(object):
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
+        # self.light_classifier = TLClassifier()
         self.listener = tf.TransformListener()
 
         self.state = TrafficLight.UNKNOWN
@@ -160,6 +164,14 @@ class TLDetector(object):
         #rospy.loginfo("light.state: %.2f", light.state)
         #rospy.loginfo("get_closest_waypoint finished")
         return light.state
+        
+    def traffic_light_on_range(self, car_x, car_y, light_x, light_y):
+        """
+        Verifies that the traffic light is within the search range in
+        order to spare processing resources
+        """
+        dist = sqrt((car_x - light_x)**2 + (car_y - light_y)**2)
+        return dist < TRAFFIC_LIGHT_SEARCH_RANGE
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -187,15 +199,17 @@ class TLDetector(object):
             for i, light in enumerate(self.lights):
                 # Get Sstop line waypoint index
                 line = stop_line_positions[i]
-                temp_stop_line_wp_idx = self.get_closest_waypoint(line[0], line[1])
-                # FInd closest stop line waypoint index
-                d = temp_stop_line_wp_idx - car_wp_idx
-                if d>=0 and d<diff:
-                    diff = d
-                    closest_light = light
-                    stop_line_wp_idx = temp_stop_line_wp_idx
-                #rospy.loginfo("stop line i: %.2f, temp_stop_line_wp_idx: %.2f, car_wp_idx: %.2f, d: %.2f, diff: %.2f, stop_line_wp_idx: %.2f", i, temp_stop_line_wp_idx,  
-                # car_wp_idx, d, diff, stop_line_wp_idx)
+                if self.traffic_light_on_range(self.pose.pose.position.x, self.pose.pose.position.y, line[0], line[1]): 
+                    temp_stop_line_wp_idx = self.get_closest_waypoint(line[0], line[1])
+                    # FInd closest stop line waypoint index
+                    d = temp_stop_line_wp_idx - car_wp_idx
+                    if d>=0 and d<diff:
+                        diff = d
+                        closest_light = light
+                        stop_line_wp_idx = temp_stop_line_wp_idx
+                    #rospy.loginfo("stop line i: %.2f, temp_stop_line_wp_idx: %.2f, car_wp_idx: %.2f, 
+                    # d: %.2f, diff: %.2f, stop_line_wp_idx: %.2f", i, temp_stop_line_wp_idx,  
+                    # car_wp_idx, d, diff, stop_line_wp_idx)
 
                     
 
