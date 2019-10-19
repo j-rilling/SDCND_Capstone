@@ -269,7 +269,6 @@ geometry_msgs::Twist PurePursuit::calcTwist(double curvature, double cmd_velocit
   }
   */
   twist.angular.z = current_velocity_.twist.linear.x * curvature;
-
   prev_angular_velocity = twist.angular.z;
   return twist;
 }
