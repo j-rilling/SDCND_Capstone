@@ -138,7 +138,7 @@ class Controller(object):
         #rospy.loginfo("ang_z_vel_error: %.2f, target_vel_ang_z: %.2f, current_vel_ang_z: %.2f", ang_z_vel_error, target_vel_ang_z, current_vel_ang_z)
         steering_pid_controller = self.steering_controller.step(ang_z_vel_error, delta_t)
 
-        steering = (1.0 + 10.0*abs(steering_pid_controller))*steering_yaw_controller
+        steering = (1.0 + abs(steering_pid_controller))*steering_yaw_controller
         
         # This avoids strong oscillations on the steering angle
         steering_max_delta = 0.1

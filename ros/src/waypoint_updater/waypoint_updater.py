@@ -26,6 +26,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_TRAFFIC_LIGHT = LOOKAHEAD_WPS*2
 
 
 class WaypointUpdater(object):
@@ -105,11 +106,17 @@ class WaypointUpdater(object):
         #print("get_closest_waypoint_idx finished")            
         
     def publish_waypoints(self, closest_idx):
-        rospy.loginfo("publish_waypoints started")
+        # rospy.loginfo("publish_waypoints started")
         lane = Lane()
         lane.header = self.base_waypoints.header
         if closest_idx is not None:
             lane.waypoints = self.base_waypoints.waypoints[closest_idx : closest_idx + LOOKAHEAD_WPS]
+            rospy.loginfo("Lenght of waypoints is: %.2f", len(lane.waypoints))
+            if len(lane.waypoints) < LOOKAHEAD_WPS:
+                rospy.logwarn("Generating points for new loop. This can make the car unstable for a while")
+                new_loop_waypoints = self.base_waypoints.waypoints[0:LOOKAHEAD_WPS - len(lane.waypoints)]
+                extended_waypoints = lane.waypoints + new_loop_waypoints
+                lane.waypoints = extended_waypoints
             
             if self.stop_line_wp_idx > 1:
                 stop_line_wp_idx = self.stop_line_wp_idx -2
@@ -118,12 +125,13 @@ class WaypointUpdater(object):
                 #rospy.loginfo("closest_idx: %.2f", closest_idx)
                 stop_line_wp_idx = 9999999 # infinite
 
-            if (self.stop_line_wp_idx >= 0) and (stop_line_wp_idx < (closest_idx +LOOKAHEAD_WPS)): 
+            if (self.stop_line_wp_idx >= 0) and (stop_line_wp_idx < (closest_idx + LOOKAHEAD_TRAFFIC_LIGHT)): 
                 # Idx > 0 if upcoming traffic light = Red // otherwise it is not published or -1
                 # If stop line idx within the planning horizon, then an action is needed
                 
                 # Calculate distance from current waypoint to stop line
-                distance_along_trace = self.distance(self.base_waypoints.waypoints, closest_idx, stop_line_wp_idx) # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
+                # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
+                distance_along_trace = self.distance(self.base_waypoints.waypoints, closest_idx, stop_line_wp_idx) 
                 rospy.loginfo("Red traffic light ahead")
                               
                 if self.current_vel_lin_x and distance_along_trace > 0.5: 
@@ -157,7 +165,8 @@ class WaypointUpdater(object):
                 for current_wp_idx in range(0, LOOKAHEAD_WPS-1):
                     # Calculate distance between current waypoint and the waypoint
                     # of the current index
-                    dist_seg_sum += self.distance(self.base_waypoints.waypoints, current_wp_idx, current_wp_idx + 1) # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
+                    # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
+                    dist_seg_sum += self.distance(self.base_waypoints.waypoints, current_wp_idx, current_wp_idx + 1) 
                     
                     #rospy.loginfo("LOOKAHEAD_WPS: %.2f, current_wp_idx: %.2f, len(lane.waypoints): %.2f", LOOKAHEAD_WPS, current_wp_idx, len(lane.waypoints))
                     #rospy.loginfo("i: %.2f, v_current_wp: %.4f, avg_dec: %.4f, dist_seg_sum: %.4f", i, v_current_wp, avg_dec, dist_seg_sum)
@@ -188,7 +197,7 @@ class WaypointUpdater(object):
             v_lin_x_array = []
             for wp in lane.waypoints:
                     v_lin_x_array.append(wp.twist.twist.linear.x)
-            rospy.loginfo("v_lin_x_array {}".format(v_lin_x_array))
+            # rospy.loginfo("v_lin_x_array {}".format(v_lin_x_array))
             
             # Update attributes and publish
             self.last_vel_lin_x_array = v_lin_x_array
@@ -200,7 +209,7 @@ class WaypointUpdater(object):
 
         #for wp in lane.waypoints:
             #print(wp.twist.twist.linear.x)
-        rospy.loginfo("publish_waypoints finished")
+        # rospy.loginfo("publish_waypoints finished")
         
     def pose_cb(self, msg):
         self.pose = msg
@@ -224,7 +233,6 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        self.stop_line_wp_idx = msg.data
         self.stop_line_wp_idx = msg.data
         #pass
 
