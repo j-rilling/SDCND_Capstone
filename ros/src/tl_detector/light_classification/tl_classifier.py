@@ -6,10 +6,12 @@ import rospy
 import datetime
 
 class TLClassifier(object):
-    def __init__(self):
+    def __init__(self, is_real_site):
         #TODO load classifier
-        PATH_TO_GRAPH = 'light_classification/model/frozen_inference_graph_sim.pb'
-	    #PATH_TO_GRAPH = 'light_classification/model/frozen_inference_graph_real.pb'
+        if is_real_site:
+            PATH_TO_GRAPH = 'light_classification/model/frozen_inference_graph_real.pb'
+        else:
+            PATH_TO_GRAPH = 'light_classification/model/frozen_inference_graph_sim.pb'
   
         self.graph = tf.Graph()
         self.threshold = .5

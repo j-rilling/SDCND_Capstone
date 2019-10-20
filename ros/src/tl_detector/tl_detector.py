@@ -50,7 +50,7 @@ class TLDetector(object):
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
+        self.light_classifier = TLClassifier(self.config['is_site'])
         self.listener = tf.TransformListener()
 
         self.state = TrafficLight.UNKNOWN
@@ -213,17 +213,23 @@ class TLDetector(object):
                     # car_wp_idx, d, diff, stop_line_wp_idx)
 
                     
-
+        
         if closest_light:
             state = self.get_light_state(closest_light)
             rospy.loginfo("car_wp_idx: %.2f, tl_line_wp_idx: %.2f, tl_state: %.2f", car_wp_idx, stop_line_wp_idx, state)
             #rospy.loginfo("process_traffic_lights_finished")
             return stop_line_wp_idx, state
-            
+        
+        """ COMMENTED FOR TESTING WITH REAL WORD BAG FILE
         rospy.loginfo("car_wp_idx: %.2f, tl_line_wp_idx: %.2f, tl_state: %.2f", car_wp_idx, -1.0, TrafficLight.UNKNOWN)
         rospy.loginfo("process_traffic_lights finished")
         return -1, TrafficLight.UNKNOWN
-
+        """
+        
+        ## ONLY USE WITH REAL TIME BAG FILE, AFTER TESTING DELETE
+        state = self.get_light_state(0)
+        return -1, state
+        
 if __name__ == '__main__':
     try:
         TLDetector()
