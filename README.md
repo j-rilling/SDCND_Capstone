@@ -43,10 +43,10 @@ The performance is good for simullator, here is an example:
 
 ![](./ReportImages/TL_Result_Sim.png)
 
-Althought the model performs good for simulator, but  it didn't perform good enough for real world test. To improve the performance, Gamma correction was used to enhance too bright images.
+Althought the model performs good for simulator, but it didn't perform good enough for real world test. To improve the performance, Gamma correction was used to enhance too bright images.
 
 Here are some examples:
 
 ![](./ReportImages/TL_RealWorldResult_1.png)
 
-![](./ReportImages/TL_RealWorldResult_2.png)
+![](./ReportImages/TL_RealWorld_Result2.png)
