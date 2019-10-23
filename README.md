@@ -37,8 +37,16 @@ The traffic light detection node uses the base waypoints sent by the waypoint lo
 ### Traffic Light Detection
 The tasks for this package were broken into two parts. In the first part, we need to implement the tl_detector.py module. The walkthrough section gives enough details to implement this module. What is not mentioned in the walkthrough code is the second part, to build a traffic light classifier. Most people used the tensorflow object dection API for this project. There is a very good reference from Alex Lechner at https://github.com/alex-lechner/Traffic-Light-Classification. It gives a detailed tutorial on how to build a traffic light classifier in this project. I followed the same methodoligy to test a couple of pre-trained models in the tensowflow library.
 
-We end up using the SSD Inception V2 model for this project. Two seperate models are trained for simulator and real-world testing. Both models were trained for 20,000 steps.
+I end up using the SSD Inception V2 model for this project. Two seperate models are trained for simulator and real-world testing. Both models were trained for 20,000 steps.
 
 The performance is good for simullator, here is an example:
 
+![](./ReportImages/TL_Result_Sim.png)
 
+Althought the model performs good for simulator, but  it didn't perform good enough for real world test. To improve the performance, Gamma correction was used to enhance too bright images.
+
+Here are some examples:
+
+![](./ReportImages/TL_RealWorldResult_1.png)
+
+![](./ReportImages/TL_RealWorldResult_2.png)
