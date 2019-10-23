@@ -223,12 +223,17 @@ class TLDetector(object):
         """ COMMENTED FOR TESTING WITH REAL WORD BAG FILE
         rospy.loginfo("car_wp_idx: %.2f, tl_line_wp_idx: %.2f, tl_state: %.2f", car_wp_idx, -1.0, TrafficLight.UNKNOWN)
         rospy.loginfo("process_traffic_lights finished")
-        return -1, TrafficLight.UNKNOWN
         """
+        ## this is for simulator and two bags: just_traffic_light.bag and loop_with_traffic_light.bag
+        ## if you are using traffic_light_training.bag, please comment this line
+        return -1, TrafficLight.UNKNOWN
+        
         
         ## ONLY USE WITH REAL TIME BAG FILE, AFTER TESTING DELETE
-        state = self.get_light_state(0)
-        return -1, state
+        ## this is only for traffic_light_training.bag and this bag has no waypoint. 
+        ## if you want to test it, un-comment the following two lines
+        #state = self.get_light_state(0)
+        #return -1, state
         
 if __name__ == '__main__':
     try:
