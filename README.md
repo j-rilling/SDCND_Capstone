@@ -34,7 +34,47 @@ This subsystem is the one responsible of determining changes on the trajectory b
 
 The traffic light detection node uses the base waypoints sent by the waypoint loader node, the current position of the car and an image from a camera attached to the car in order to determine the first waypoint the car will encounter on its trajectory where a red traffic light is located. This information is then used by the waypoint updater node to reduce the speed of the waypoints until it reaches 0 for the waypoint where the stop line for the traffic light is located.
 
-### Traffic Light Detection
+### About the DBW (Drive by Wire) Node
+As explained before, the task of this package is to convert the desired linear and angular speeds to the commands needed for the physical actuators. This node works with a group of PID controllers and a specialized steering controller which uses the physical properties of the car. This node runs with a frequency of 50 Hz and cannot be changed since it alters the work of the PID controllers.
+
+#### Control of linear velocity
+The linear velocity is controlled using two PID controllers, one for the throttle and one for the brake. The control strategy is relatively simple, the throttle PID controller is used when the target linear velocity is higher or equal than the current speed and the brake controller on the contrary case. In the case the car is stopped and that condition is wanted (if target and current linear velocities are near to 0) a constant brake torque is applied that avoids the car to roll. The following diagram ilustrates this control loop:
+
+![](./ReportImages/Control_diagram_lin_speed.png)
+
+#### Control of angular velocity
+The target angular velocity is the one needed so the car stays on the trajectory defined by the waypoints and it is controlled using a combination between a specialized yaw controller and a PID controller. 
+
+The specialized yaw controller uses some physical properties of the car like the lenght of the wheel base, the maximum lateral acceleration or a desired steer ratio in order to determine the steering angle. Using this controller alone, the car is capable of following the trajectory but with big oscillations. 
+
+In order to make the car follow the trajectory without oscillations, the yaw controller is combined with a PID controller for the angular velocity using the following equation:
+
+$$ st(av_{SP}, av_{PV}) = (1 + |PID_{out}(av_{SP}, av_{PV})|)\cdot YAW_{out}(av_{SP}, av_{PV}) (1)$$
+
+Where:
+$ st $: Steering angle [rad]
+$ PID_{out} $: Output of PID controller
+$ YAW_{out} $: Output of yaw controller [rad]
+$ av_{SP} $: Setpoint of angular velocity [rad/s]
+$ av_{PV} $: Current angular velocity [rad/s]
+
+In the equation it can be seen that the yaw controller determines the sign of the steering while the PID controller makes this value bigger, making the control more exact.
+
+The following diagram ilustrates the angular velocity control:
+
+![](./ReportImages/Control_diagram_ang_speed.png)
+
+
+The linear speed SP and angular speed SP (Setpoint) are received from the waypoint follower node within the topic "twist_cmd". The throttle, brake and steering commands are sent to the car hardware interface software or to the simulator through the topics "vehicle/throttle_cmd", "vehicle/brake_cmd" and "vehicle/steering_cmd".
+
+### About the waypoint updater node
+This is the node responsible of creating the trajectory the car will follow on the next cycles. This trajectory consists on a list of waypoints with a given position, linear velocity and angular velocity.  In order to generate the trajectory, the base waypoints that correspond to all the possible waypoints the car can be in on the map are used. 
+
+The first step in order to generate the trajectory is to determine the closest waypoint to the car, and then select the next 50 waypoints ahead to the position of the car. 
+
+After having selected the waypoints, it is searched within the next 100 waypoints if there is a red traffic light. In the case that a red traffic light is found and the car is moving, the linear velocity of the waypoints is decreased progresively until 0 at the stop line. 
+
+### About the traffic light detection node
 The tasks for this package were broken into two parts. In the first part, we need to implement the tl_detector.py module. The walkthrough section gives enough details to implement this module. What is not mentioned in the walkthrough code is the second part, to build a traffic light classifier. Most people used the tensorflow object dection API for this project. There is a very good reference from Alex Lechner at https://github.com/alex-lechner/Traffic-Light-Classification. It gives a detailed tutorial on how to build a traffic light classifier in this project. I followed the same methodoligy to test a couple of pre-trained models in the tensowflow library.
 
 I end up using the SSD Inception V2 model for this project. Two seperate models are trained for simulator and real-world testing. Both models were trained for 20,000 steps.
