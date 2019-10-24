@@ -47,7 +47,7 @@ class TLDetector(object):
         config_string = rospy.get_param("/traffic_light_config")
         self.config = yaml.load(config_string)
 
-        self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
+        self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=10)
 
         self.bridge = CvBridge()
         self.light_classifier = TLClassifier(self.config['is_site'])
@@ -63,7 +63,7 @@ class TLDetector(object):
         self.loop()
 
     def loop(self):
-        rate = rospy.Rate(5)
+        rate = rospy.Rate(2)
         while not rospy.is_shutdown(): 
 
             light_wp, new_state = self.process_traffic_lights()
@@ -163,7 +163,13 @@ class TLDetector(object):
             return light.state
         else: 
             cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "passthrough")
-            state_classifier = self.light_classifier.get_classification(cv_image)        
+            cv_image_len_x = cv_image.shape[1]
+            cv_image_len_y = cv_image.shape[0]
+            resized_image = cv2.resize(cv_image, ((cv_image_len_x/10),(cv_image_len_y/10)))
+            resized_image_len_x = resized_image.shape[1]
+            resized_image_len_y = resized_image.shape[0]
+            rospy.loginfo("Shape cv_image: %s, %s, Shape cropped_image: %s, %s", cv_image_len_x, cv_image_len_y, resized_image_len_x, resized_image_len_y)
+            state_classifier = self.light_classifier.get_classification(resized_image)        
             return state_classifier
         
     def traffic_light_on_range(self, car_x, car_y, light_x, light_y):

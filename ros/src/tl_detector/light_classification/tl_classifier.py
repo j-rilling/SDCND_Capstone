@@ -35,8 +35,6 @@ class TLClassifier(object):
             self.boxes = self.graph.get_tensor_by_name('detection_boxes:0')
             self.scores = self.graph.get_tensor_by_name('detection_scores:0')
             self.classes = self.graph.get_tensor_by_name('detection_classes:0')
-            self.num_detections = self.graph.get_tensor_by_name(
-                'num_detections:0')
         
         self.sess = tf.Session(graph=self.graph)
 
@@ -63,8 +61,8 @@ class TLClassifier(object):
         with self.graph.as_default():
             img_expand = np.expand_dims(image, axis=0)
             start = datetime.datetime.now()
-            (boxes, scores, classes, num_detections) = self.sess.run(
-                [self.boxes, self.scores, self.classes, self.num_detections],
+            (boxes, scores, classes) = self.sess.run(
+                [self.boxes, self.scores, self.classes],
                 feed_dict={self.image_tensor: img_expand})
             end = datetime.datetime.now()
             c = end - start
