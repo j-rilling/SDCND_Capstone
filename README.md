@@ -68,11 +68,24 @@ The following diagram ilustrates the angular velocity control:
 The linear speed SP and angular speed SP (Setpoint) are received from the waypoint follower node within the topic "twist_cmd". The throttle, brake and steering commands are sent to the car hardware interface software or to the simulator through the topics "vehicle/throttle_cmd", "vehicle/brake_cmd" and "vehicle/steering_cmd".
 
 ### About the waypoint updater node
-This is the node responsible of creating the trajectory the car will follow on the next cycles. This trajectory consists on a list of waypoints with a given position, linear velocity and angular velocity.  In order to generate the trajectory, the base waypoints that correspond to all the possible waypoints the car can be in on the map are used. 
+This is the node responsible of creating the trajectory the car will follow on the next cycles. This trajectory consists on a list of waypoints with a given position, linear velocity and angular velocity. In order to generate the trajectory, the base waypoints that correspond to all the possible waypoints the car can be in on the map are used.
 
-The first step in order to generate the trajectory is to determine the closest waypoint to the car, and then select the next 50 waypoints ahead to the position of the car. 
+The first step in order to generate the trajectory is to determine the closest waypoint to the car, and then select the next 50 waypoints ahead to the position of the car. The closest waypoint is found by using KDTree.query in order to do this efficiently. It needs to be checked if the closest waypoint is ahead of the car, if not, the closest waypoint ahead can be found at the next index. 
 
-After having selected the waypoints, it is searched within the next 100 waypoints if there is a red traffic light. In the case that a red traffic light is found and the car is moving, the linear velocity of the waypoints is decreased progresively until 0 at the stop line. 
+After having selected the waypoints, it is searched within the next 100 waypoints if there is a red traffic light. As the vehicles location is determined at the middle of the car, two waypoints earlier are assigned to the stop line in order to avoid overshooting. In the case that a red traffic light is found and the car is moving, the distance to stop line gets calculated and the speed is reduced linearly. 
+
+A required average decelaration rate is calculated to decrease speed. In case the vehicle is really slow or is currently in stand still or too far ahead of the stop line, this deceleration rate is small. The speed gets reduced as soon as the deceleration rate is bigger then 0.5 m/s², which is found to be an appropriate value to brake smoothly. As the waypoint follower needs a certain deviation to the current linear velocity to start braking, the velocity for the first waypoint is reduced more than for the following waypoints. 
+
+Basically the following states can be outlined:
+1.	Vehicle Moving
+1.1.	Deceleration needed
+1.2.	Keep Moving -> acceleration required
+2.	Vehicle in Standstill
+2.1.	Acceleration needed (e.g. at simulation begin)
+2.2.	Keep stopping
+
+With regards to the desired state, which can be determined by evaluating the current speed, the required deceleration rate and the distance to stop line, the target speeds for the upcoming waypoints can be calculated.
+
 
 ### About the traffic light detection node
 The tasks for this package were broken into two parts. In the first part, we need to implement the tl_detector.py module. The walkthrough section gives enough details to implement this module. What is not mentioned in the walkthrough code is the second part, to build a traffic light classifier. Most people used the tensorflow object dection API for this project. There is a very good reference from Alex Lechner at https://github.com/alex-lechner/Traffic-Light-Classification. It gives a detailed tutorial on how to build a traffic light classifier in this project. I followed the same methodoligy to test a couple of pre-trained models in the tensowflow library.
