@@ -25,7 +25,7 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 100 # Number of waypoints we will publish. You can change this number
 LOOKAHEAD_TRAFFIC_LIGHT = LOOKAHEAD_WPS*2
 Speed_limit_m_s = 40*0.44704
 
@@ -113,26 +113,45 @@ class WaypointUpdater(object):
         if closest_idx is not None:
             lane.waypoints = self.base_waypoints.waypoints[closest_idx : closest_idx + LOOKAHEAD_WPS]
             #rospy.loginfo("Lenght of waypoints is: %.2f", len(lane.waypoints))
+            # If lane.waypoints does not have enough points (it is reaching the last indexes of base_waypoints.waypoints)
             if len(lane.waypoints) < LOOKAHEAD_WPS:
-                rospy.logwarn("Generating points for new loop. This can make the car unstable for a while")
-                new_loop_waypoints = self.base_waypoints.waypoints[0:LOOKAHEAD_WPS - len(lane.waypoints)]
-                extended_waypoints = lane.waypoints + new_loop_waypoints
-                lane.waypoints = extended_waypoints
+                # rospy.logwarn("Generating points for new loop. This can make the car unstable for a while")
+                # The first points of base_waypoints.waypoints is taken. It can be that even adding all the base waypoints to the
+                # lane.waypoints list, they are still not enough to make the LOOKAHEAD_WPS number of points. In that case, after 
+                # adding all the base waypoints, a new iteration of new waypoints is added to complete the LOOKAHEAD_WPS number
+                # of points. This happens on the real site of Udacity.
+                if (LOOKAHEAD_WPS - len(lane.waypoints)) < len(self.base_waypoints.waypoints):
+                    new_loop_waypoints = self.base_waypoints.waypoints[0:LOOKAHEAD_WPS - len(lane.waypoints)]
+                    extended_waypoints = lane.waypoints + new_loop_waypoints
+                    lane.waypoints = extended_waypoints
+                else:
+                    new_loop_waypoints_1 = self.base_waypoints.waypoints
+                    extended_waypoints_1 = lane.waypoints + new_loop_waypoints_1
+                    new_loop_waypoints_2 = self.base_waypoints.waypoints[0:LOOKAHEAD_WPS - len(extended_waypoints_1)]
+                    extended_waypoints_2 = extended_waypoints_1 + new_loop_waypoints_2
+                    lane.waypoints = extended_waypoints_2
             
+            # Subtracts 2 indexes in order to stop the car at the stop line and not over it
             if self.stop_line_wp_idx > 1:
                 stop_line_wp_idx = self.stop_line_wp_idx -2
                 #rospy.loginfo("closest_idx: %.2f   stop_line_wp_idx: %.2f", closest_idx, stop_line_wp_idx)
             else:
                 #rospy.loginfo("closest_idx: %.2f", closest_idx)
                 stop_line_wp_idx = 9999999 # infinite
+                
+            # Calculates the index of the next stop line on the lane waypoints
+            if closest_idx <= stop_line_wp_idx:
+                stop_line_lane_wp_idx = stop_line_wp_idx - closest_idx
+            else:
+                stop_line_lane_wp_idx = stop_line_wp_idx + (len(self.base_waypoints.waypoints) - closest_idx)
 
-            if (self.stop_line_wp_idx >= 0) and (stop_line_wp_idx < (closest_idx + LOOKAHEAD_TRAFFIC_LIGHT)): 
+            if (self.stop_line_wp_idx >= 0) and (stop_line_lane_wp_idx < LOOKAHEAD_WPS): 
                 # Idx > 0 if upcoming traffic light = Red // otherwise it is not published or -1
                 # If stop line idx within the planning horizon, then an action is needed
                 
                 # Calculate distance from current waypoint to stop line
                 # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
-                distance_along_trace = self.distance(self.base_waypoints.waypoints, closest_idx, stop_line_wp_idx) 
+                distance_along_trace = self.distance(lane.waypoints, 0, stop_line_lane_wp_idx) 
                 rospy.loginfo("Red traffic light ahead")
                               
                 if self.current_vel_lin_x and distance_along_trace > 0.5: 
@@ -147,7 +166,7 @@ class WaypointUpdater(object):
                 if avg_dec < 0.5:
                     # As long as the average deceleration is low, the vehicle shall keep driving
                     do_not_brake = 1
-                    rospy.loginfo("Acceleratio needed")
+                    rospy.loginfo("Acceleration needed")
 
                 
                 # Set velocity for first waypoint. 
@@ -208,18 +227,18 @@ class WaypointUpdater(object):
                 #rospy.loginfo("self.current_vel_lin_x: %.2f", self.current_vel_lin_x)
                 
                 dist_seg_sum = 0
-                planning_horizon_meters = self.distance(self.base_waypoints.waypoints, closest_idx, closest_idx + LOOKAHEAD_WPS) 
-                iterator_idx = 0
+                planning_horizon_meters = self.distance(lane.waypoints, 0, LOOKAHEAD_WPS-1) 
                 # Calculating a linear velocity reduction
-                for current_wp_idx in range(0, LOOKAHEAD_WPS-1):
+                
+                for iterator_idx in range(0, LOOKAHEAD_WPS-1):
                     # Calculate distance between current waypoint and the waypoint
                     # of the current index
                     # try to stop 2 waypoints ahead of the stopline so that the vehicle does not overshoot
-                    dist_seg_sum = self.distance(self.base_waypoints.waypoints, closest_idx, closest_idx+iterator_idx) 
+                    dist_seg_sum = self.distance(lane.waypoints, 0, iterator_idx) 
                     
                     #rospy.loginfo("LOOKAHEAD_WPS: %.2f, current_wp_idx: %.2f, len(lane.waypoints): %.2f", LOOKAHEAD_WPS, current_wp_idx, len(lane.waypoints))
-                    rospy.loginfo("i: %.2f, v_current_wp: %.4f, avg_dec: %.4f, dist_seg_sum: %.4f", current_wp_idx, v_current_wp, avg_dec, dist_seg_sum)
-                    lane.waypoints[current_wp_idx].twist.twist.linear.x = v_current_wp
+                    rospy.loginfo("i: %.2f, v_current_wp: %.4f, avg_dec: %.4f, dist_seg_sum: %.4f", iterator_idx, v_current_wp, avg_dec, dist_seg_sum)
+                    lane.waypoints[iterator_idx].twist.twist.linear.x = v_current_wp
                     
                     
                     if avg_dec > 0.5: # and v_current_wp > 0.01:
@@ -230,8 +249,8 @@ class WaypointUpdater(object):
                         v_current_wp = max(0, lane.waypoints[0].twist.twist.linear.x -  lane.waypoints[0].twist.twist.linear.x * (dist_seg_sum/(min(planning_horizon_meters, distance_along_trace)-2)))
                         #rospy.loginfo("i: %.2f, v_current_wp: %.4f, avg_dec: %.4f, dist_seg_sum: %.4f", current_wp_idx, v_current_wp, avg_dec, dist_seg_sum)
 
-                        lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = v_current_wp
-                        lane.waypoints[current_wp_idx + 1].twist.twist.linear.y = 0
+                        lane.waypoints[iterator_idx].twist.twist.linear.x = v_current_wp
+                        lane.waypoints[iterator_idx].twist.twist.linear.y = 0
                         #rospy.loginfo("current_wp_idx: %.2f, wp.twist.twist.linear.x: %.2f", current_wp_idx, lane.waypoints[current_wp_idx + 1].twist.twist.linear.x)
                     #elif avg_dec <= 0.5:
                         #v_current_wp = max(0, v_current_wp+((dist_seg_sum-last_dist_seg_sum)/(distance_along_trace)*10*0.44704))
@@ -241,15 +260,14 @@ class WaypointUpdater(object):
                         #lane.waypoints[current_wp_idx + 1].twist.twist.linear.y = 0
                     else:
                         if avg_dec > 0.2 and avg_dec < 0.5:
-                            lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = self.current_vel_lin_x
-                            lane.waypoints[current_wp_idx + 1].twist.twist.linear.y = 0
+                            lane.waypoints[iterator_idx].twist.twist.linear.x = self.current_vel_lin_x
+                            lane.waypoints[iterator_idx].twist.twist.linear.y = 0
                         else:
                             #lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = 40*0.44704
                             v_current_wp = max(0, min(v_current_wp+0.05, Speed_limit_m_s))
-                            lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = v_current_wp
-                            lane.waypoints[current_wp_idx + 1].twist.twist.linear.y = 0
+                            lane.waypoints[iterator_idx].twist.twist.linear.x = v_current_wp
+                            lane.waypoints[iterator_idx].twist.twist.linear.y = 0
                         
-                    iterator_idx +=1
                     
             else: # traffic light state is not red or not within planning horizon, proceed with max velocity
                 rospy.loginfo("Planning horizon free of red traffic lights")
@@ -298,7 +316,6 @@ class WaypointUpdater(object):
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
         self.stop_line_wp_idx = msg.data
-        #pass
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
@@ -309,30 +326,18 @@ class WaypointUpdater(object):
 
     def set_waypoint_velocity(self, waypoints, waypoint, velocity):
         waypoints[waypoint].twist.twist.linear.x = velocity
-
+        
     def distance(self, waypoints, wp1, wp2):
-        #rospy.loginfo("distance started")
-        dist = 0
-        wp3 = -1
+        dist = 0.0
         dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
-        if wp2 >= (len(self.waypoints_2d) -1):
-            wp3 = (wp2 + 1) % len(self.waypoints_2d)
-            wp2 = (len(self.waypoints_2d) -1)
-            
-        #rospy.loginfo("wp1: %.2f, wp2: %.2f", wp1, wp2)
-        for i in range(wp1, wp2+1):
-            rospy.loginfo("wp1: %.2f, wp2: %.2f, i: %.2f", wp1, wp2+1, i)
-            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
-            wp1 = i
-        if wp3 > 0:
-            wp1 = 0
-            for i in range(wp1, wp3):
-                rospy.loginfo("wp1: %.2f, wp3: %.2f, i: %.2f", wp1, wp3, i)
-                dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
-                wp1 = i
-
-        #rospy.loginfo("dist_along_trace: %.2f", dist)
-        #rospy.loginfo("distance finished")
+        
+        for i in range(wp1, wp2 -1):
+            step_dist = dl(waypoints[i].pose.pose.position, waypoints[i+1].pose.pose.position)
+            dist += step_dist
+        
+        direct_dist = dl(waypoints[wp1].pose.pose.position, waypoints[wp2].pose.pose.position)
+        rospy.loginfo("Direct distance: %.2f, exact distance: %.2f", direct_dist, dist)
+        
         return dist
     
 
