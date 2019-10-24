@@ -78,10 +78,15 @@ A required average decelaration rate is calculated to decrease speed. In case th
 
 Basically the following states can be outlined:
 1.	Vehicle Moving
+
 1.1.	Deceleration needed
+
 1.2.	Keep Moving -> acceleration required
+
 2.	Vehicle in Standstill
+
 2.1.	Acceleration needed (e.g. at simulation begin)
+
 2.2.	Keep stopping
 
 With regards to the desired state, which can be determined by evaluating the current speed, the required deceleration rate and the distance to stop line, the target speeds for the upcoming waypoints can be calculated.
