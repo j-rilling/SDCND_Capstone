@@ -313,12 +313,24 @@ class WaypointUpdater(object):
     def distance(self, waypoints, wp1, wp2):
         #rospy.loginfo("distance started")
         dist = 0
+        wp3 = -1
         dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+        if wp2 >= (len(self.waypoints_2d) -1):
+            wp3 = (wp2 + 1) % len(self.waypoints_2d)
+            wp2 = (len(self.waypoints_2d) -1)
+            
         #rospy.loginfo("wp1: %.2f, wp2: %.2f", wp1, wp2)
         for i in range(wp1, wp2+1):
-            #rospy.loginfo("wp1: %.2f, i: %.2f", wp1, i)
+            rospy.loginfo("wp1: %.2f, wp2: %.2f, i: %.2f", wp1, wp2+1, i)
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
+        if wp3 > 0:
+            wp1 = 0
+            for i in range(wp1, wp3):
+                rospy.loginfo("wp1: %.2f, wp3: %.2f, i: %.2f", wp1, wp3, i)
+                dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+                wp1 = i
+
         #rospy.loginfo("dist_along_trace: %.2f", dist)
         #rospy.loginfo("distance finished")
         return dist
