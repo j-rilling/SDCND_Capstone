@@ -56,7 +56,7 @@ class TLClassifier(object):
                 self.gamma = 0.6
             elif self.gamma == 0.6:
                 self.gamma = 1.0
-        image = self.adjust_gamma(image, self.gamma)
+        #image = self.adjust_gamma(image, self.gamma)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_np = np.asarray(image, dtype="uint8")
         image_np_expanded = np.expand_dims(image_np, axis=0)
