@@ -6,7 +6,13 @@ This project consist on the integration of different systems in order to drive a
 
 The software packages are programmed in Python 3 and C++11 using the libraries Scipy, Tensorflow, OpenCV, and others. In order to integrate all software packages, build, debug and run the system the middleware ROS was used, specifically the Kinetic version. For the simulation, the [Udacity system integration simulator](https://github.com/udacity/CarND-Capstone/releases) was used.
 
-This project was done on a group of three people: Jorge Rilling, Martin Sommer and Chia-Hao Huang.
+This project was done on a group of three people: 
+
+Jorge Rilling
+
+Martin Sommer 
+
+Chia-Hao Huang (asamiyangyang@gmail.com)
 
 ### About the software structure
 The system consits on 4 smaller subsystems: Perception subsystem, planning subsystem, control subsystem and hardware (simulator or real car). From the ros perspective the system is built with 7 ros nodes and more than 15 ros topics that make the communication between the nodes. 
