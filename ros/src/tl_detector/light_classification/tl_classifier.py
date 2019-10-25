@@ -110,8 +110,9 @@ class TLClassifier(object):
                 rospy.loginfo("Light is RED")
                 return TrafficLight.RED
             elif tl_index == 1:
-                rospy.loginfo("Light is YELLOW")
-                return TrafficLight.YELLOW
+                rospy.loginfo("Light is YELLOW, but return RED")
+                return TrafficLight.RED
+                #return TrafficLight.YELLOW
             elif tl_index == 2:
                 rospy.loginfo("Light is GREEN")
                 return TrafficLight.GREEN
