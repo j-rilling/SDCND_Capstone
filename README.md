@@ -103,7 +103,7 @@ The tasks for this package were broken into two parts. In the first part, we nee
 
 For detecting traffic lights from a camera, a pre-trained on the COCO dataset model "ssdlite_mobilenet_v2_coco" has been taken from the [Tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md). The model was selected based on the processing speed.
 
-A Gamma correction was used to enhance too bright images, and once the model finds the traffic lights and provides you the boundary boxes, the next step is to crop the traffic light images from the scene based on those boxes and identify the color. The approach is entirely based on image processing:
+Once the model finds the traffic lights and provides you the boundary boxes, the next step is to crop the traffic light images from the scene based on those boxes and identify the color. The approach is entirely based on image processing:
 
 1. Convert the image into LAB color space and isolate the L channel. Good support material can be found [here](https://www.learnopencv.com/color-spaces-in-opencv-cpp-python/)
 
@@ -113,7 +113,7 @@ A Gamma correction was used to enhance too bright images, and once the model fin
 
 Althought the "ssdlite_mobilenet_v2_coco" performs good for simulator, but it didn't perform good enough for real world test. To improve the performance, another model "ssd_mobilenet_v1_coco_2017_11_17" was used and was retrained on a dataset kindly shared [here](https://drive.google.com/file/d/0B-Eiyn-CUQtxdUZWMkFfQzdObUE/view). It was a great help finding a GitHub nickname [coldKnight](https://github.com/coldKnight/TrafficLight_Detection-TensorFlowAPI) explaining how to re-train the models.
 
-After training, the result was quiet satisfied, here are some examples:
+After training, the result was quite satisfied, here are some examples:
 
 ![](./ReportImages/Sim_1.png)
 
