@@ -13,7 +13,7 @@ import cv2
 import yaml
 from scipy.spatial import KDTree
 
-STATE_COUNT_THRESHOLD = 3
+STATE_COUNT_THRESHOLD = 2
 TRAFFIC_LIGHT_SEARCH_RANGE = 300 # Parameter used to search traffic lights only within a short distance 
                                  # to the car in order to make the code faster
 
@@ -79,7 +79,7 @@ class TLDetector(object):
                 self.state = new_state
             elif self.state_count >= STATE_COUNT_THRESHOLD:
                 self.last_state = self.state
-                if new_state != TrafficLight.RED:
+                if new_state == TrafficLight.GREEN or new_state == TrafficLight.UNKNOWN:
                     light_wp = -1
                 self.last_wp = light_wp
                 self.upcoming_red_light_pub.publish(Int32(light_wp))
