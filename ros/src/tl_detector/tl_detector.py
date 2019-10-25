@@ -163,13 +163,14 @@ class TLDetector(object):
             return light.state
         else: 
             cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "passthrough")
-            cv_image_len_x = cv_image.shape[1]
-            cv_image_len_y = cv_image.shape[0]
-            resized_image = cv2.resize(cv_image, ((cv_image_len_x/10),(cv_image_len_y/10)))
-            resized_image_len_x = resized_image.shape[1]
-            resized_image_len_y = resized_image.shape[0]
-            rospy.loginfo("Shape cv_image: %s, %s, Shape cropped_image: %s, %s", cv_image_len_x, cv_image_len_y, resized_image_len_x, resized_image_len_y)
-            state_classifier = self.light_classifier.get_classification(resized_image)        
+            #cv_image_len_x = cv_image.shape[1]
+            #cv_image_len_y = cv_image.shape[0]
+            #resized_image = cv2.resize(cv_image, ((cv_image_len_x/10),(cv_image_len_y/10)))
+            #resized_image_len_x = resized_image.shape[1]
+            #resized_image_len_y = resized_image.shape[0]
+            #rospy.loginfo("Shape cv_image: %s, %s, Shape cropped_image: %s, %s", cv_image_len_x, cv_image_len_y, resized_image_len_x, resized_image_len_y)
+            #state_classifier = self.light_classifier.get_classification(resized_image)
+            state_classifier = self.light_classifier.get_classification(cv_image)
             return state_classifier
         
     def traffic_light_on_range(self, car_x, car_y, light_x, light_y):
