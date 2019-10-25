@@ -93,18 +93,22 @@ With regards to the desired state, which can be determined by evaluating the cur
 
 
 ### About the traffic light detection node
-The tasks for this package were broken into two parts. In the first part, we need to implement the tl_detector.py module. The walkthrough section gives enough details to implement this module. What is not mentioned in the walkthrough code is the second part, to build a traffic light classifier. Most people used the tensorflow object dection API for this project. There is a very good reference from Alex Lechner at https://github.com/alex-lechner/Traffic-Light-Classification. It gives a detailed tutorial on how to build a traffic light classifier in this project. I followed the same methodoligy to test a couple of pre-trained models in the tensowflow library.
+The tasks for this package were broken into two parts. In the first part, we need to implement the tl_detector.py module. The walkthrough section gives enough details to implement this module. What is not mentioned in the walkthrough code is the second part, to build a traffic light classifier. 
 
-I end up using the SSD Inception V2 model for this project. Two seperate models are trained for simulator and real-world testing. Both models were trained for 20,000 steps.
+For detecting traffic lights from a camera, a pre-trained on the COCO dataset model "ssdlite_mobilenet_v2_coco" has been taken from the [Tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md). The model was selected based on the processing speed.
 
-The performance is good for simullator, here is an example:
+A Gamma correction was used to enhance too bright images, and once the model finds the traffic lights and provides you the boundary boxes, the next step is to crop the traffic light images from the scene based on those boxes and identify the color. The approach is entirely based on image processing:
 
-![](./ReportImages/TL_Result_Sim.png)
+1. Convert the image into LAB color space and isolate the L channel. Good support material can be found [here](https://www.learnopencv.com/color-spaces-in-opencv-cpp-python/)
 
-Althought the model performs good for simulator, but it didn't perform good enough for real world test. To improve the performance, Gamma correction was used to enhance too bright images.
+2. Split the traffic light cropped image onto three equal segments - upper, middle, and lower corresponding to read, yellow, and green lights respectively.
 
-Here are some examples:
+3. To identify the color, we need to find out which segment is brighter. Thanks to the LAB color space, L channel gives us exactly that information. All we need to do is to find the sum of all pixels in each of the three segments. The highest score gives us the traffic light color.
 
-![](./ReportImages/TL_RealWorldResult_1.png)
+Althought the "ssdlite_mobilenet_v2_coco" performs good for simulator, but it didn't perform good enough for real world test. To improve the performance, another model "ssd_mobilenet_v1_coco_2017_11_17" was used and was retrained on a dataset kindly shared [here](https://drive.google.com/file/d/0B-Eiyn-CUQtxdUZWMkFfQzdObUE/view). It was a great help finding a GitHub nickname [coldKnight](https://github.com/coldKnight/TrafficLight_Detection-TensorFlowAPI) explaining how to re-train the models.
 
-![](./ReportImages/TL_RealWorld_Result2.png)
+After training, the result was quiet satisfied, here are some examples:
+
+![](./ReportImages/Sim_1.png)
+
+![](./ReportImages/Real_1.png)
