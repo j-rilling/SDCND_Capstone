@@ -13,7 +13,7 @@ import cv2
 import yaml
 from scipy.spatial import KDTree
 
-STATE_COUNT_THRESHOLD = 2
+STATE_COUNT_THRESHOLD = 3
 TRAFFIC_LIGHT_SEARCH_RANGE = 300 # Parameter used to search traffic lights only within a short distance 
                                  # to the car in order to make the code faster
 
