@@ -28,6 +28,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 LOOKAHEAD_WPS = 100 # Number of waypoints we will publish. You can change this number
 LOOKAHEAD_TRAFFIC_LIGHT = LOOKAHEAD_WPS*2
 Speed_limit_m_s = 40*0.44704
+mph_to_meterspsec = 0.44704
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -54,7 +55,8 @@ class WaypointUpdater(object):
         self.last_closest_wp = -1
         self.last_vel_lin_x_array = None
         self.last_avg_dec = 0.
-        #print("----------Waypoint Tree None initialized-----------")
+        self.curr_linear_vel_mph = 0.0
+        self.curr_linear_vel_meterspsec = 0.0
         self.loop()
         
     def loop(self):
@@ -62,15 +64,15 @@ class WaypointUpdater(object):
         rate = rospy.Rate(20)
         while not rospy.is_shutdown():
             if self.pose and self.base_waypoints and self.waypoint_tree:
+                # Gets target linear velocity from parameter server
+                self.curr_linear_vel_mph = rospy.get_param('waypoint_loader/velocity', 0.0)
+                self.curr_linear_vel_meterspsec = self.curr_linear_vel_mph*mph_to_meterspsec
                 # Get closest waypoint
-                #print("while started")
                 closest_waypoint_idx = self.get_closest_waypoint_idx()
+                # Publishes the waypoints through 'final_waypoints' topic
                 self.publish_waypoints(closest_waypoint_idx)
-                #print("closest_waypoint_idx:")
-                #print(closest_waypoint_idx)
+
                 rate.sleep()
-                #print("while finished")
-        #print "self.loop finished"
 
     def get_closest_waypoint_idx(self):
         #print("get_closest_waypoint_idx started") 
@@ -264,7 +266,7 @@ class WaypointUpdater(object):
                             lane.waypoints[iterator_idx].twist.twist.linear.y = 0
                         else:
                             #lane.waypoints[current_wp_idx + 1].twist.twist.linear.x = 40*0.44704
-                            v_current_wp = max(0, min(v_current_wp+0.05, Speed_limit_m_s))
+                            v_current_wp = max(0, min(v_current_wp+0.05, self.curr_linear_vel_meterspsec))
                             lane.waypoints[iterator_idx].twist.twist.linear.x = v_current_wp
                             lane.waypoints[iterator_idx].twist.twist.linear.y = 0
                         
@@ -272,7 +274,7 @@ class WaypointUpdater(object):
             else: # traffic light state is not red or not within planning horizon, proceed with max velocity
                 rospy.loginfo("Planning horizon free of red traffic lights")
                 for wp in lane.waypoints:
-                    wp.twist.twist.linear.x = Speed_limit_m_s
+                    wp.twist.twist.linear.x = self.curr_linear_vel_meterspsec
                     wp.twist.twist.linear.y = 0
            
             # Log velocity vector -- just for debugging purposes
