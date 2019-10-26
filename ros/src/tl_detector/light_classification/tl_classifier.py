@@ -103,22 +103,28 @@ class TLClassifier(object):
 
             box = np.array([nbox[0]*height, nbox[1]*width, nbox[2]*height, nbox[3]*width]).astype(int)
 
-            tl_cropped = image[box[0]:box[2], box[1]:box[3]]
-            tl_color, tl_index = self.get_color(tl_cropped)
+            tl_cropped = image[box[0]:box[2], box[1]:box[3]]         
+            
+            # Avoids crash of node if tl_cropped is none (this happened with real site test)
+            if tl_cropped is not None:
+                rospy.loginfo("Dimensions of tl_cropped: %s, %s", tl_cropped.shape[0], tl_cropped.shape[1])   
+                tl_color, tl_index = self.get_color(tl_cropped)
 
-            if tl_index == 0:
-                rospy.loginfo("Light is RED")
-                return TrafficLight.RED
-            elif tl_index == 1:
-                rospy.loginfo("Light is YELLOW, but return RED")
-                return TrafficLight.RED
-                #return TrafficLight.YELLOW
-            elif tl_index == 2:
-                rospy.loginfo("Light is GREEN")
-                return TrafficLight.GREEN
-            else :
-                rospy.loginfo("Light is UNKNOWN")
-                return TrafficLight.UNKNOWN
+                if tl_index == 0:
+                    rospy.loginfo("Light is RED")
+                    return TrafficLight.RED
+                elif tl_index == 1:
+                    rospy.loginfo("Light is YELLOW, but return RED")
+                    return TrafficLight.RED
+                    #return TrafficLight.YELLOW
+                elif tl_index == 2:
+                    rospy.loginfo("Light is GREEN")
+                    return TrafficLight.GREEN
+                else :
+                    rospy.loginfo("Light is UNKNOWN")
+                    return TrafficLight.UNKNOWN
+            else:
+                rospy.loginfo("tl_cropped is none")
 
         return tl_index
 
