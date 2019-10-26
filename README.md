@@ -33,7 +33,7 @@ This subsystem is the one responsible of defining the trajectory the car will fo
 
 The waypoint loader determines all the valid waypoints the car can drive on and send them to be used by the waypoint updater node.
 
-The waypoint updater node determines the trajectory the car will follow on the next cycles using the base waypoints sent by the waypoint loader node. For that it does not only determine which waypoints the car will follow, but also determines the linear and angular velocities the car will need on those points. Then the updated waypoints are sent to the waypoint follower node.
+The waypoint updater node determines the trajectory the car will follow on the next cycles using the base waypoints sent by the waypoint loader node. For that it does not only determine which waypoints the car will follow, but also determines the linear the car should drive on those points. Then the updated waypoints are sent to the waypoint follower node.
 
 #### Perception subsystem
 This subsystem is the one responsible of determining changes on the trajectory based on what the car senses. In the case of this project, the test track on the simulator and the real world site have only a traffic light, so the subsystem consists only on a traffic light detection node which was written by us in Python.
@@ -78,9 +78,9 @@ The following diagram ilustrates the angular velocity control:
 The linear speed SP and angular speed SP (Setpoint) are received from the waypoint follower node within the topic "twist_cmd". The throttle, brake and steering commands are sent to the car hardware interface software or to the simulator through the topics "vehicle/throttle_cmd", "vehicle/brake_cmd" and "vehicle/steering_cmd".
 
 ### About the waypoint updater node
-This is the node responsible of creating the trajectory the car will follow on the next cycles. This trajectory consists on a list of waypoints with a given position, linear velocity and angular velocity. In order to generate the trajectory, the base waypoints that correspond to all the possible waypoints the car can be in on the map are used.
+This is the node responsible for creating the trajectory the car will follow on the next cycles. This trajectory consists of a list of waypoints with a given position, linear velocity and angular velocity. In order to generate the trajectory, the base waypoints that correspond to all the possible waypoints the car can be in on the map are used.
 
-The first step in order to generate the trajectory is to determine the closest waypoint to the car, and then select the next 100 waypoints ahead to the position of the car. The closest waypoint is found by using [KDTree.query](https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.KDTree.html) which is a very efficient algorithm for this problem. After having the closest waypoint, It needs to be checked if it is ahead of the car, if not, the closest waypoint ahead can be found at the next index.
+The first step in order to generate the trajectory is to determine the closest waypoint to the car, and then select the next 100 waypoints ahead to the position of the car. The closest waypoint is found by using [KDTree.query](https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.KDTree.html) which is a very efficient algorithm to adress this problem. After having the closest waypoint found, it needs to be checked if it is ahead of the car. If not, the closest waypoint ahead can be found at the next index.
 
 After having selected the waypoints, it is searched within the selected waypoints if there is a red traffic light. Since the vehicles location is determined at the middle of the car, two waypoints earlier are assigned as the stop line in order to avoid overshooting. In the case that a red traffic light is found and the car is moving, the distance to stop line gets calculated and the speed is reduced linearly. 
 
@@ -91,13 +91,13 @@ Basically the following states can be outlined:
 
 1.1.	Deceleration needed
 
-1.2.	Keep Moving -> acceleration required
+1.2	Keep Moving -> acceleration required
 
 2.	Vehicle in Standstill
 
-2.1.	Acceleration needed (e.g. at simulation begin)
+2.1	Acceleration needed (e.g. at simulation begin)
 
-2.2.	Keep stopping
+2.2	Keep stopping
 
 With regards to the desired state, which can be determined by evaluating the current speed, the required deceleration rate and the distance to stop line, the target speeds for the upcoming waypoints can be calculated.
 
