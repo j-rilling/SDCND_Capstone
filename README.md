@@ -55,14 +55,18 @@ The specialized yaw controller uses some physical properties of the car like the
 
 In order to make the car follow the trajectory without oscillations, the yaw controller is combined with a PID controller for the angular velocity using the following equation:
 
-$$ st(av_{SP}, av_{PV}) = (1 + |PID_{out}(av_{SP}, av_{PV})|)\cdot YAW_{out}(av_{SP}, av_{PV}) (1)$$
+<a href="https://www.codecogs.com/eqnedit.php?latex=$$&space;st(av_{SP},&space;av_{PV})&space;=&space;(1&space;&plus;&space;|PID_{out}(av_{SP},&space;av_{PV})|)\cdot&space;YAW_{out}(av_{SP},&space;av_{PV})&space;(1)$$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?$$&space;st(av_{SP},&space;av_{PV})&space;=&space;(1&space;&plus;&space;|PID_{out}(av_{SP},&space;av_{PV})|)\cdot&space;YAW_{out}(av_{SP},&space;av_{PV})&space;(1)$$" title="$$ st(av_{SP}, av_{PV}) = (1 + |PID_{out}(av_{SP}, av_{PV})|)\cdot YAW_{out}(av_{SP}, av_{PV}) (1)$$" /></a>
 
 Where:
-$ st $: Steering angle [rad]
-$ PID_{out} $: Output of PID controller
-$ YAW_{out} $: Output of yaw controller [rad]
-$ av_{SP} $: Setpoint of angular velocity [rad/s]
-$ av_{PV} $: Current angular velocity [rad/s]
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;st&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;st&space;$" title="$ st $" /></a>: Steering angle [rad]
+<a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;PID_{out}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;PID_{out}&space;$" title="$ PID_{out} $" /></a>: Output of PID controller
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;YAW_{out}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;YAW_{out}&space;$" title="$ YAW_{out} $" /></a>: Output of yaw controller [rad]
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;av_{SP}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;av_{SP}&space;$" title="$ av_{SP} $" /></a>: Setpoint of angular velocity [rad/s]
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;av_{PV}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;av_{PV}&space;$" title="$ av_{PV} $" /></a>: Current angular velocity [rad/s]
 
 In the equation it can be seen that the yaw controller determines the sign of the steering while the PID controller makes this value bigger, making the control more exact.
 
