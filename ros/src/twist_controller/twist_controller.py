@@ -7,17 +7,18 @@ import csv
 
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
-brake_torque_to_keep_zero_speed = 450
-speed_limit = 40*ONE_MPH # mph converted to m/s
+brake_torque_to_keep_zero_speed = 700
+#speed_limit = 40*ONE_MPH # mph converted to m/s
 
 
 class Controller(object):
     def __init__(self, vehicle_mass, fuel_capacity, brake_deadband,
                  decel_limit, accel_limit, wheel_radius, wheel_base, 
-                 steer_ratio, max_lat_accel, max_steer_angle):
+                 steer_ratio, max_lat_accel, max_steer_angle, speed_limit):
         # TODO: Implement
         
         rospy.loginfo("Controller init started")
+        
         # Assign Inputs to class attributes
         self.vehicle_mass = vehicle_mass
         self.fuel_capacity = fuel_capacity
@@ -25,6 +26,7 @@ class Controller(object):
         self.decel_limt = decel_limit
         self.accel_limit = accel_limit
         self.wheel_radius = wheel_radius
+        self.speed_limit = speed_limit
         
         # Create Lowpass filter attribute for linear speed values
         ts_lin = 0.02 # 50 Hz sample time
@@ -68,7 +70,7 @@ class Controller(object):
         
         # Brake Controller Initialization:
         brake_kp = 900.0
-        brake_ki = 15.0
+        brake_ki = 300.0
         brake_kd = 300.0
         brake_min = 0.0
         brake_max = 1500.0
@@ -107,7 +109,7 @@ class Controller(object):
         #if current_vel_lin_x is None:
             #rospy.logerr("Error: current_vel_lin_x is None")
 
-        target_vel_lin_x = min(speed_limit-0.5, target_vel_lin_x)
+        target_vel_lin_x = min(self.speed_limit-0.5, target_vel_lin_x)
         target_vel_lin_x_throttle = target_vel_lin_x - 0.5
         lin_x_vel_error = target_vel_lin_x - current_vel_lin_x       
         lin_x_vel_error_throttle = target_vel_lin_x_throttle - current_vel_lin_x
