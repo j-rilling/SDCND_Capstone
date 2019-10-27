@@ -4,7 +4,7 @@ import numpy as np
 import rospy
 from geometry_msgs.msg import PoseStamped, TwistStamped
 from styx_msgs.msg import Lane, Waypoint
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, Bool
 from scipy.spatial import KDTree
 from std_msgs.msg import Int32
 
@@ -42,6 +42,7 @@ class WaypointUpdater(object):
         rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
 		
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
+        self.brake_against_creep_pub = rospy.Publisher('brake_against_creep', Bool, queue_size=1)
 
         # TODO: Add other member variables you need below
         self.pose = None
@@ -111,6 +112,7 @@ class WaypointUpdater(object):
         # rospy.loginfo("publish_waypoints started")
         lane = Lane()
         lane.header = self.base_waypoints.header
+        brake_against_creep_req = False
         if closest_idx is not None:
             lane.waypoints = self.base_waypoints.waypoints[closest_idx : closest_idx + LOOKAHEAD_WPS]
             #rospy.loginfo("Lenght of waypoints is: %.2f", len(lane.waypoints))
@@ -227,6 +229,9 @@ class WaypointUpdater(object):
                     
                 #rospy.loginfo("self.current_vel_lin_x: %.2f", self.current_vel_lin_x)
                 
+                if self.current_vel_lin_x < 0.1 and distance_along_trace < 2:
+                    brake_against_creep_req = True
+                
                 dist_seg_sum = 0
                 planning_horizon_meters = self.distance(lane.waypoints, 0, LOOKAHEAD_WPS-1) 
                 # Calculating a linear velocity reduction
@@ -282,10 +287,12 @@ class WaypointUpdater(object):
                     v_lin_x_array.append(wp.twist.twist.linear.x)
             rospy.loginfo("v_lin_x_array {}".format(v_lin_x_array))
             
+            
             # Update attributes and publish
             self.last_vel_lin_x_array = v_lin_x_array
             self.last_closest_wp = closest_idx
             self.final_waypoints_pub.publish(lane)
+            self.brake_against_creep_pub.publish(brake_against_creep_req)
                 
         else: 
             rospy.loginfo("closest_idx: None", )
@@ -293,7 +300,7 @@ class WaypointUpdater(object):
         #for wp in lane.waypoints:
             #print(wp.twist.twist.linear.x)
         # rospy.loginfo("publish_waypoints finished")
-        
+ 
     def pose_cb(self, msg):
         self.pose = msg
         

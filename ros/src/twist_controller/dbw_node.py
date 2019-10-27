@@ -74,6 +74,7 @@ class DBWNode(object):
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_cb)
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_cb)
         rospy.Subscriber('current_velocity', TwistStamped, self.velocity_cb)
+        rospy.Subscriber('brake_against_creep', Bool, self.brake_against_creep_cb)
         
         self.current_vel_lin_x = None
         self.current_vel_ang_z = None
@@ -84,6 +85,7 @@ class DBWNode(object):
         self.angular_vel = None
         self.timestamp = rospy.get_time()
         self.throttle = self.steering = self.brake = 0.0
+        self.brake_against_creep_enabled = False
         # rospy.loginfo("DBW init finished")
         self.loop()
 
@@ -127,6 +129,7 @@ class DBWNode(object):
                         self.target_vel_lin_x,
                         self.target_vel_ang_z,
                         self.dbw_enabled,
+                        self.brake_against_creep_enabled,
                         delta_t)
                 self.publish(self.throttle, self.brake, self.steering)
                 #rospy.loginfo("If dbw_enabled finished")
@@ -136,9 +139,13 @@ class DBWNode(object):
         #rospy.loginfo("Loop function finished")
             
     def dbw_enabled_cb(self, msg):
-        rospy.loginfo("DBW_cb started")
+        #rospy.loginfo("DBW_cb started")
         self.dbw_enabled = msg
-        rospy.loginfo("DBW_cb finished")
+        #rospy.loginfo("DBW_cb finished")
+        
+    def brake_against_creep_cb(self, msg):
+        self.brake_against_creep_enabled = msg
+        #rospy.loginfo("self.brake_against_creep_enabled: %b", self.brake_against_creep_enabled)
         
     def twist_cb(self, msg):
         #rospy.loginfo("Twist_cb started")

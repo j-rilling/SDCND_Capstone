@@ -81,7 +81,7 @@ class Controller(object):
         # rospy.loginfo("Controller init finished")
         pass
 
-    def control(self, current_vel_lin_x, current_vel_ang_z, target_vel_lin_x, target_vel_ang_z, dbw_enabled, delta_t):
+    def control(self, current_vel_lin_x, current_vel_ang_z, target_vel_lin_x, target_vel_ang_z, dbw_enabled, brake_against_creep_enabled, delta_t):
         
         # TODO: Change the arg, kwarg list to suit your needs
         # Return throttle, brake_torque, steering
@@ -135,6 +135,10 @@ class Controller(object):
         if brake_torque > 100:
             self.throttle_controller.reset()
         #self.last_brake_torque = brake_torque 
+        
+        # Overwrite brake torque in standstill case to brake against Carlas automatic transmission creep torque
+        if brake_against_creep_enabled:
+            brake_torque = min(700.0, brake_torque)
         
         # If car becomes to fast (tolerance 0.2 m/s) or car is really slow
         # then throttle has to be set to 0
