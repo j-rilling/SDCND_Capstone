@@ -38,11 +38,11 @@ class Controller(object):
         self.ang_v_lowpassfilter = LowPassFilter(tau_ang, ts_ang)
         
         # Throttle Controller Initialization:
-        throttle_kp = 0.3
-        throttle_ki = 0.2
-        throttle_kd = 0.
+        throttle_kp = 0.4
+        throttle_ki = 0.01
+        throttle_kd = 0.1
         throttle_min = 0.0
-        throttle_max = 0.4
+        throttle_max = 1.0
         
         # Throttle Controller
         self.throttle_controller = PID(throttle_kp, throttle_ki, throttle_kd, throttle_min, throttle_max)
@@ -67,11 +67,11 @@ class Controller(object):
         self.max_total_steering = max_steer_angle
         
         # Brake Controller Initialization:
-        brake_kp = 800
-        brake_ki = 150
-        brake_kd = 300
+        brake_kp = 900.0
+        brake_ki = 15.0
+        brake_kd = 300.0
         brake_min = 0.0
-        brake_max = 1500
+        brake_max = 1500.0
         
         # Brake Controller
         self.brake_controller = PID(brake_kp, brake_ki, brake_kd, brake_min, brake_max)

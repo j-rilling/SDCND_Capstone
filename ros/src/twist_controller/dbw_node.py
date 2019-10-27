@@ -78,8 +78,8 @@ class DBWNode(object):
         self.dbw_enabled = 0
         self.linear_vel = None
         self.angular_vel = None
-        self.timestamp = 0.
-        self.throttle = self.steering = self.brake = 0
+        self.timestamp = rospy.get_time()
+        self.throttle = self.steering = self.brake = 0.0
         # rospy.loginfo("DBW init finished")
         self.loop()
 
