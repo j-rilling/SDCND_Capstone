@@ -86,6 +86,8 @@ After having selected the waypoints, it is searched within the selected waypoint
 
 A required average deceleration rate is calculated to decrease speed. In case the vehicle is really slow or is currently in stand still or too far ahead of the stop line, this deceleration rate will be small. The speed gets reduced as soon as the deceleration rate is bigger than 0.5 m/s², which is found to be an appropriate value to brake smoothly. Since the waypoint follower needs a certain deviation to the current linear velocity to start braking, the velocity for the first waypoint is reduced more than for the following waypoints. 
 
+In the case the vehicle is stopped and it is wanted to keep it stopped, a brake torque against creep needs to be applied due to the automatic transmision Carla has. Therefore in this case a bool signal is sent from the waypoint updater node to the DBW node through the topic "brake_against_creep".
+
 Basically the following states can be outlined:
 1.	Vehicle Moving
 
