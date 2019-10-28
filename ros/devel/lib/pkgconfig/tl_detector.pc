@@ -1,8 +1,0 @@
-prefix=/home/student/CarND_MIH/ros/devel
-
-Name: tl_detector
-Description: Description of tl_detector
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/student/CarND_MIH/ros/devel/lib 
-Requires: 
