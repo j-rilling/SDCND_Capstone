@@ -76,13 +76,13 @@ class DBWNode(object):
         rospy.Subscriber('current_velocity', TwistStamped, self.velocity_cb)
         rospy.Subscriber('brake_against_creep', Bool, self.brake_against_creep_cb)
         
-        self.current_vel_lin_x = None
-        self.current_vel_ang_z = None
-        self.target_vel_ang_z = None
-        self.target_vel_lin_x = None
+        self.current_vel_lin_x = 0.0
+        self.current_vel_ang_z = 0.0
+        self.target_vel_ang_z = 0.0
+        self.target_vel_lin_x = 0.0
         self.dbw_enabled = 0
-        self.linear_vel = None
-        self.angular_vel = None
+        self.linear_vel = 0.0
+        self.angular_vel = 0.0
         self.timestamp = rospy.get_time()
         self.throttle = self.steering = self.brake = 0.0
         self.brake_against_creep_enabled = False
@@ -104,17 +104,6 @@ class DBWNode(object):
             # if <dbw is enabled>:
             #   self.publish(throttle, brake, steer)
             
-            if not None in (self.current_vel_lin_x, self.current_vel_ang_z, self.target_vel_lin_x, self.target_vel_ang_z):
-                #self.throttle, self.brake, self.steering = self.controller.control(self.current_vel, self.dbw_enabled, self.linear_vel, self.angular_vel)
-                # rospy.loginfo("If not None in self.current_vel_lin_x, ... entered")
-                self.throttle = 0.
-                self.brake = 0.
-                self.steering = 0.
-                self.dbw_enabled = 1
-            #else:
-                #rospy.loginfo("Current v_x: %.2f, Target v_x: %.2f, // Current yaw: %.2f, Target yaw: %.2f", 
-                # self.current_vel_lin_x, self.target_vel_lin_x, self.current_vel_ang_z, self.target_vel_ang_z)
-                
             # Get current timestamp and calculate delta time   
             current_timestamp = rospy.get_time()
             delta_t = current_timestamp - self.timestamp           
